@@ -14,6 +14,9 @@ from DHT22_Sensor import cekTempHum
 from PH_Sensor import PH
 from TDS_Sensor import TDS
 
+#import send realtime to server class
+from temp_data import Temp_Data
+
 # set GPIO mode as BCM
 GPIO.setmode(GPIO.BCM)
 
@@ -90,8 +93,8 @@ z.close()
 skrg = datetime.datetime.now()
 
 # set initial value for first feeding
-t = datetime.datetime.strptime('07:00:00', '%H:%M:%S')
-f_feed = datetime.time(t.hour, t.minute, t.second)
+#t = datetime.datetime.strptime('22:13:00', '%H:%M:%S')
+#f_feed = datetime.time(t.hour, t.minute, t.second)
 
 if(skrg.time() < t_wp_on_set):
     water_pump = False
@@ -111,6 +114,16 @@ elif(skrg.time() > t_ap_on_set and skrg.time() < t_ap_off_set):
     
 elif(skrg.time() > t_ap_off_set):
     air_pump = False
+
+#definition feeding related
+mulai =  datetime.datetime.strptime('07:00', '%H:%M')
+time_mulai = datetime.time(mulai.hour, mulai.minute)
+future = datetime.datetime.now().replace(hour=7, minute=0)
+
+flag_feed = True
+
+midnight = datetime.datetime.strptime('23:59', '%H:%M')
+time_midnight = datetime.time(midnight.hour, midnight.minute)
 
 #calculate distance
 def read_distance(temp, humid):
@@ -180,6 +193,7 @@ while True:
         t_wh_h = float(f.readline().strip())
         t_fd = int(f.readline().strip())
         f.close()
+#        t_fd = 2
         
 #       RETRIEVE DATA FROM SENSOR
         humidtemp = cekTempHum.read_temp_humidity()
@@ -195,6 +209,8 @@ while True:
         ph = round(PH.getPHValue(water_temp), 2)
         tds = TDS.getTDSValue()/500
         ec = round(tds, 3)
+
+        Temp_Data.send_temp_data(humidtemp[1], humidtemp[0], water_temp, ph, ec, distance)
 #        print("Water temperature = ", water_temp)
 #        print("Air temperature   = ", air_temp)
 #        print("Air humidity      = ", air_hum)
@@ -322,13 +338,36 @@ while True:
             
 #       AUTO FEEDING
 #       FIRST FEEDING
-        if(now.time() == f_feed):
-            message = 'Pemberian pakan ke-1'
-            telegram_bot.sendMessage(id_balas, message)
-#           code servo membuka
-            time.sleep(0.1)
-#           code servo menutup
-            
+#        print('sebelum feeding')
+#        print(now.strftime('%H:%M'))
+#        print(future.strftime('%H:%M'))
+        if (now.strftime('%H:%M') >= time_mulai.strftime('%H:%M') and now.strftime('%H:%M') <= time_midnight.strftime('%H:%M')):
+            while (future.strftime('%H:%M') < now.strftime('%H:%M')):
+#                print('while')
+                jam_tambah = datetime.timedelta(hours = t_fd)
+                future = future + jam_tambah
+#                print(future)
+
+            if (now.strftime('%H:%M') == time_mulai.strftime('%H:%M') and flag_feed):
+#                print('MEMBERI MAKAN')
+                jam_tambah = datetime.timedelta(minutes = t_fd)
+                future = now + jam_tambah
+                flag_feed = False
+                message = 'Pemberian pakan pukul : '+now.strftime('%H:%M')
+#            print(future.strftime('%H:%M'))
+            if (now.strftime('%H:%M') == future.strftime('%H:%M') and flag_feed):
+#                print('MEMBERI MAKAN LAGI')
+                jam_tambah = datetime.timedelta(minutes = t_fd)
+                future = now + jam_tambah
+                flag_feed = False
+                message = 'Pemberian pakan pukul : '+now.strftime('%H:%M')
+
+            if (now.strftime('%H:%M') != future.strftime('%H:%M') and now.strftime('%H:%M') != time_mulai.strftime('%H:%M')):
+#                print('If terakhir')
+                flag_feed = True
+
+            telegram_bot.sendMessage(chat_id, message)
+
         time.sleep(1)
 
     except KeyboardInterrupt:
