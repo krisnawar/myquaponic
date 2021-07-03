@@ -145,11 +145,11 @@ if __name__ == '__main__':
 #                sent_time = datetime.datetime.now()
 #                sent = curr_time.strftime('%H:%M:%S')
             twoBeep()
-            GPIO.cleanup()
+#            GPIO.cleanup()
         
         else:
             threeBeep()
-            GPIO.cleanup()
+#            GPIO.cleanup()
         
 #        if(detik%5 == 0):
 #            writeThreshold()

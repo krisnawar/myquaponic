@@ -209,6 +209,7 @@ while True:
         ph = round(PH.getPHValue(water_temp), 2)
         tds = TDS.getTDSValue()/500
         ec = round(tds, 3)
+#        print('finish reading sensor')
 
         Temp_Data.send_temp_data(humidtemp[1], humidtemp[0], water_temp, ph, ec, distance)
 #        print("Water temperature = ", water_temp)
@@ -224,92 +225,96 @@ while True:
         treset = now.strftime('%H:%M')        
         
 #       AUTOMATION PROCESS
-
+        message = ''
 #       WATER PUMP CHECK
         if(now.time() < t_wp_on and water_pump == False):
 #            print('Pompa air ikan menyala')
             GPIO.output(wp_pond, GPIO.LOW)
 #            water_pump = True
-            message = 'Pompa air kolam berhasil dihidupkan'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Pompa air kolam berhasil dihidupkan\n'
+#            telegram_bot.sendMessage(id_balas, message)
             water_pump = True
         elif(now.time() > t_wp_on and now.time() < t_wp_off and water_pump == True):
 #            print('Pompa air tumbuhan menyala\nPompa air ikan mati')
             GPIO.output(wp_pond, GPIO.HIGH)
             GPIO.output(wp_plant, GPIO.LOW)
 #            water_pump = False
-            message = 'Pompa air kolam berhasil dimatikan\nPompa tanaman berhasil dihidupkan'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Pompa air kolam berhasil dimatikan\nPompa tanaman berhasil dihidupkan\n'
+#            telegram_bot.sendMessage(id_balas, message)
             water_pump = False
         elif(now.time() > t_wp_off and water_pump == False):
 #            print('Pompa air ikan menyala')
             GPIO.output(wp_plant, GPIO.HIGH)
             GPIO.output(wp_pond, GPIO.LOW)
 #            water_pump = True
-            message = 'Pompa air berhasil dihidupkan'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Pompa air berhasil dihidupkan\n'
+#            telegram_bot.sendMessage(id_balas, message)
             water_pump = True
         elif(treset == '23:59' and water_pump == True):
 #            print('Reset Bolean')
             water_pump = False
-        
+#        print('done water pump')
+
 #       AIR PUMP CHECK
         if(now.time() < t_ap_on and air_pump == False):
 #            print('Pompa udara filter menyala')
             GPIO.output(ap_fil, GPIO.LOW)
-            message = 'Aerator filter berhasil dihidupkan'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Aerator filter berhasil dihidupkan\n'
+#            telegram_bot.sendMessage(id_balas, message)
             air_pump = True
         elif(now.time() > t_ap_on and now.time() < t_ap_off and air_pump == True):
 #            print('Pompa udara kolam menyala\nPompa udara filter mati')
             GPIO.output(ap_fil, GPIO.HIGH)
             GPIO.output(ap_pond, GPIO.LOW)
-            message = 'Aerator kolam berhasil dihidupkan\nAerator filter berhasil dimatikan'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Aerator kolam berhasil dihidupkan\nAerator filter berhasil dimatikan\n'
+#            telegram_bot.sendMessage(id_balas, message)
             air_pump = False
         elif(now.time() > t_ap_off and air_pump == False):
 #            print('Pompa udara filter menyala')
             GPIO.output(ap_pond, GPIO.HIGH)
             GPIO.output(ap_fil, GPIO.LOW)
-            message = 'Aerator filter berhasil dihidupkan'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Aerator filter berhasil dihidupkan\n'
+#            telegram_bot.sendMessage(id_balas, message)
             air_pump = True
         elif(treset == '23:59' and air_pump == True):
 #            print('Reset Bolean')
             air_pump = False
+#        print('done air pump')
         
 #       PH VALUE CHECK
         if(now.time() > t_wp_on and now.time() < t_wp_off):
             if(ph < t_lph):
 #                print('Pengisian buffer basa')
-                message = 'Air di kolam penampungan terlalu asam\nMemulai prosedur penyesuain pH'
-                telegram_bot.sendMessage(id_balas, message)
+                message += 'Air di kolam penampungan terlalu asam\nMemulai prosedur penyesuain pH\n'
+#                telegram_bot.sendMessage(id_balas, message)
                 GPIO.output(base, GPIO.LOW)
                 time.sleep(2)
                 GPIO.output(base, GPIO.HIGH)
                 
             if(ph > t_hph):
 #                print('Pengisian buffer asam')
-                message = 'Air di kolam penampungan terlalu basa\nMemulai prosedur penyesuain pH'
-                telegram_bot.sendMessage(id_balas, message)
+                message += 'Air di kolam penampungan terlalu basa\nMemulai prosedur penyesuain pH\n'
+#                telegram_bot.sendMessage(id_balas, message)
                 GPIO.output(acid, GPIO.LOW)
                 time.sleep(2)
                 GPIO.output(acid, GPIO.HIGH)
+#        print('done ph')
         
 #       HUMIDITY CHECK
         if(air_hum < t_lrh):
 #            print('Menyemprotkan misting')
-            message = 'Kelembapan berada dibawah ambang batas\nMemulai prosedur penyemprotan kabut air'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Kelembapan berada dibawah ambang batas\nMemulai prosedur penyemprotan kabut air\n'
+#            telegram_bot.sendMessage(id_balas, message)
             GPIO.output(mist, GPIO.LOW)
             time.sleep(5)
             GPIO.output(mist, GPIO.HIGH)
+#        print('done misting')
         
 #       WATER LEVEL CHECK
         if(distance < t_wh_l and anom_wh == False):
 #            print('menambahkan air kolam')
-            message = 'Ketinggian air kolam kurang dari batas minimal!\nMemulai prosedur pengisian air'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Ketinggian air kolam kurang dari batas minimal!\nMemulai prosedur pengisian air\n'
+#            telegram_bot.sendMessage(id_balas, message)
             GPIO.output(add_water, GPIO.LOW)
             anom_wh = True
 #             
@@ -317,14 +322,15 @@ while True:
 #            print('stop menambahkan air kolam')
             GPIO.output(add_water, GPIO.HIGH)
             anom_wh = False
-            message = 'Ketinggian air sudah normal'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Ketinggian air sudah normal\n'
+#            telegram_bot.sendMessage(id_balas, message)
+#        print('done water level')
         
 #       EC CHECK
         if(ec > t_hec and distance < t_wh_h and anom_ec == False):
 #            print('menambahkan air kolam karena ec tinggi')
-            message = 'Air kolam terlalu pekat!\nMemulai prosedur pengisian air'
-            telegram_bot.sendMessage(id_balas, message)
+            message += 'Air kolam terlalu pekat!\nMemulai prosedur pengisian air\n'
+#            telegram_bot.sendMessage(id_balas, message)
             GPIO.output(add_water, GPIO.LOW)
             anom_ec = True
         
@@ -332,9 +338,10 @@ while True:
 #            print('stop menambahkan air kolam karena ec tinggi')
             GPIO.output(add_water, GPIO.HIGH)
             anom_ec = False
-            message = 'Ketinggian air kolam sudah melebihi batas\nSilahkan cek kolam untuk memastikan kadar EC\n'
+            message += 'Ketinggian air kolam sudah melebihi batas\nSilahkan cek kolam untuk memastikan kadar EC\n'
             message += '\nJika kadar EC lebih dari '+t_hec+'ms/cm, dimohon untuk menguras kolam'
-            telegram_bot.sendMessage(id_balas, message)
+#            telegram_bot.sendMessage(id_balas, message)
+#        print('done ec')
             
 #       AUTO FEEDING
 #       FIRST FEEDING
@@ -342,31 +349,40 @@ while True:
 #        print(now.strftime('%H:%M'))
 #        print(future.strftime('%H:%M'))
         if (now.strftime('%H:%M') >= time_mulai.strftime('%H:%M') and now.strftime('%H:%M') <= time_midnight.strftime('%H:%M')):
-            while (future.strftime('%H:%M') < now.strftime('%H:%M')):
-#                print('while')
+            while(future < now):
                 jam_tambah = datetime.timedelta(hours = t_fd)
                 future = future + jam_tambah
-#                print(future)
+#                print((future))
+                time.sleep(5)
 
             if (now.strftime('%H:%M') == time_mulai.strftime('%H:%M') and flag_feed):
 #                print('MEMBERI MAKAN')
                 jam_tambah = datetime.timedelta(minutes = t_fd)
                 future = now + jam_tambah
                 flag_feed = False
-                message = 'Pemberian pakan pukul : '+now.strftime('%H:%M')
+                message += 'Pemberian pakan pukul : '+now.strftime('%H:%M')+'\n'
 #            print(future.strftime('%H:%M'))
             if (now.strftime('%H:%M') == future.strftime('%H:%M') and flag_feed):
 #                print('MEMBERI MAKAN LAGI')
                 jam_tambah = datetime.timedelta(minutes = t_fd)
                 future = now + jam_tambah
                 flag_feed = False
-                message = 'Pemberian pakan pukul : '+now.strftime('%H:%M')
+                message += 'Pemberian pakan pukul : '+now.strftime('%H:%M')+'\n'
 
             if (now.strftime('%H:%M') != future.strftime('%H:%M') and now.strftime('%H:%M') != time_mulai.strftime('%H:%M')):
 #                print('If terakhir')
                 flag_feed = True
+#        print('done feeding')
 
-            telegram_bot.sendMessage(chat_id, message)
+        try:
+            if(message != ''):
+#                print('try tele')
+                telegram_bot.sendMessage(id_balas, message)
+#            else:
+#                print('Message kosong')
+        except:
+            print('masuk except tele')
+            time.sleep(40)
 
         time.sleep(1)
 
@@ -376,4 +392,5 @@ while True:
         sys.exit()
 
     except:
-        time.sleep(30)
+        print('except try pertama')
+        pass
