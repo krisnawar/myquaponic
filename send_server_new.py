@@ -106,7 +106,9 @@ def threeBeep():
     time.sleep(beepInterval)
 
 if __name__ == '__main__':
-    try:
+    bool_sent = True
+
+    while bool_sent:
 #        print('masuk try')
 #        waktu = datetime.datetime.now()
 #        now = waktu.strftime('%M:%S')
@@ -139,16 +141,18 @@ if __name__ == '__main__':
 #             print("pH                = ", ph)
 #             print("EC                = ", ec)
 #        print('bersiap urlopen')
-        rescode = urlopen("https://myquaponic.xyz/api/insertdata?recorded_at=" + record + "&suhu_udara=" + str(air_temp) + "&kelembapan_udara=" + str(air_hum) + "&suhu_air=" + str(water_temp) + "&ph=" + str(ph) + "&ec=" + str(ec) + "&ketinggian_air=" + str(distance))
+        try:
+            rescode = urlopen("https://myquaponic.xyz/api/insertdata?recorded_at=" + record + "&suhu_udara=" + str(air_temp) + "&kelembapan_udara=" + str(air_hum) + "&suhu_air=" + str(water_temp) + "&ph=" + str(ph) + "&ec=" + str(ec) + "&ketinggian_air=" + str(distance))
             
-        if(rescode.getcode() == 200):
+            if(rescode.getcode() == 200):
 #                sent_time = datetime.datetime.now()
 #                sent = curr_time.strftime('%H:%M:%S')
-            twoBeep()
+                twoBeep()
+                bool_sent = False
 #            GPIO.cleanup()
         
-        else:
-            threeBeep()
+            else:
+                threeBeep()
 #            GPIO.cleanup()
         
 #        if(detik%5 == 0):
@@ -156,10 +160,10 @@ if __name__ == '__main__':
             
 #        time.sleep(1)
     
-    except KeyboardInterrupt:
-        print("Selesai")
-        GPIO.cleanup()
+        except KeyboardInterrupt:
+            print("Selesai")
+#            GPIO.cleanup()
 
-#except:
-#    print('Program berhenti karena terjadi error')
-#    GPIO.cleanup()
+        except:
+            print('Program berhenti karena terjadi error')
+            threeBeep()
