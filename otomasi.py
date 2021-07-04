@@ -205,7 +205,7 @@ while True:
         raw_distance = read_distance(air_temp, air_hum)
         while(raw_distance < 2.0 or raw_distance > 40.0):
             raw_distance =  read_distance(air_temp, air_hum)
-        distance = round(41.2 - raw_distance, 2)
+        distance = round(40.0 - raw_distance, 2)
         ph = round(PH.getPHValue(water_temp), 2)
         tds = TDS.getTDSValue()/500
         ec = round(tds, 3)

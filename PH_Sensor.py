@@ -17,6 +17,9 @@ class PH():
     def getPHValue(temp):
         ads1115.setAddr_ADS1115(0x48)
         ads1115.setGain(ADS1115_REG_CONFIG_PGA_6_144V)
-        adc0 = ads1115.readVoltage(0)
-        PH = ph.readPH(adc0['r'], temp)
-        return PH
+        phsum = 0
+        for x in range(20):
+            adc0 = ads1115.readVoltage(0)
+            phsum += ph.readPH(adc0['r'], temp)
+        phfinal = phsum/20.0
+        return phfinal
