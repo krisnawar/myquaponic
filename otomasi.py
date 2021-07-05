@@ -17,6 +17,9 @@ from TDS_Sensor import TDS
 #import send realtime to server class
 from temp_data import Temp_Data
 
+#import component to send data to server
+from urllib.request import urlopen
+
 # set GPIO mode as BCM
 GPIO.setmode(GPIO.BCM)
 
@@ -125,6 +128,10 @@ flag_feed = True
 midnight = datetime.datetime.strptime('23:59', '%H:%M')
 time_midnight = datetime.time(midnight.hour, midnight.minute)
 
+#definition boolean value for sending anomaly data
+bool_sent = False	#telegram related
+must_send = False	#server
+
 #calculate distance
 def read_distance(temp, humid):
     GPIO.output(TRIG, False)
@@ -172,6 +179,22 @@ def read_temp():
         temp_c = float(temp_string)/1000.0
         return temp_c
 
+#sending to server in case of anomaly
+def send_anomaly(rec_at, a_temp, a_humid, w_temp, ph, ec, wh):
+    bool_sent_anom = True
+    curr_time = rec_at.strftime('%Y-%m-%d %H:%M:%S')
+    record = curr_time.replace(" ", "%20")
+    while(bool_sent_anom):
+        try:
+            print('sending anomali')
+            urlopen('https://myquaponic.xyz/api/insertdata?recorded_at='+record+'&suhu_udara='+str(a_temp)+'&kelembapan_udara='+str(a_humid)+'&suhu_air='+str(w_temp)+'&ph='+str(ph)+'&ec='+str(ec)+'&ketinggian_air='+str(wh))
+            print('success sending anomali')
+            bool_sent_anom = False
+
+        except:
+            print('telah terjadi kegagalan pengiriman ke server')
+            pass
+
 # begin loop
 while True:
     try:
@@ -205,7 +228,7 @@ while True:
         raw_distance = read_distance(air_temp, air_hum)
         while(raw_distance < 2.0 or raw_distance > 40.0):
             raw_distance =  read_distance(air_temp, air_hum)
-        distance = round(40.0 - raw_distance, 2)
+        distance = round(40.4 - raw_distance, 2)
         ph = round(PH.getPHValue(water_temp), 2)
         tds = TDS.getTDSValue()/500
         ec = round(tds, 3)
@@ -285,50 +308,71 @@ while True:
         if(now.time() > t_wp_on and now.time() < t_wp_off):
             if(ph < t_lph):
 #                print('Pengisian buffer basa')
-                message += 'Air di kolam penampungan terlalu asam!!!\n'
-                message += 'pH saat ini : '+str(ph)+'\n'
-                message += 'Batas bawah pH : '+str(t_lph)+'\n'
-                message += 'Memulai prosedur penyesuain pH\n'
+                if (bool_sent == False):
+                    message += 'Air di kolam penampungan terlalu asam!!!\n'
+                    message += 'pH saat ini : '+str(ph)+'\n'
+                    message += 'Batas bawah pH : '+str(t_lph)+'\n'
+                    message += 'Memulai prosedur penyesuain pH\n'
+                    bool_sent = True
 #                telegram_bot.sendMessage(id_balas, message)
                 GPIO.output(base, GPIO.LOW)
                 time.sleep(1)
                 GPIO.output(base, GPIO.HIGH)
+                must_send = True
+
+            if(ph > t_lph and bool_sent == True):
+                bool_sent = False
                 
             if(ph > t_hph):
 #                print('Pengisian buffer asam')
-                message += 'Air di kolam penampungan terlalu basa!!!\n'
-                message += 'pH saat ini : '+str(ph)+'\n'
-                message += 'Batas atas pH : '+str(t_hph)+'\n'
-                message += 'Memulai prosedur penyesuain pH\n'
+                if (bool_sent == False):
+                    message += 'Air di kolam penampungan terlalu basa!!!\n'
+                    message += 'pH saat ini : '+str(ph)+'\n'
+                    message += 'Batas atas pH : '+str(t_hph)+'\n'
+                    message += 'Memulai prosedur penyesuain pH\n'
+                    bool_sent = True
 #                telegram_bot.sendMessage(id_balas, message)
                 GPIO.output(acid, GPIO.LOW)
                 time.sleep(2)
                 GPIO.output(acid, GPIO.HIGH)
+                must_send = True
+
+            if(ph < t_hph and bool_sent == True):
+                bool_sent = False
 #        print('done ph')
         
 #       HUMIDITY CHECK
         if(air_hum < t_lrh):
 #            print('Menyemprotkan misting')
-            message += 'Kelembapan berada dibawah ambang batas!!!\n'
-            message += 'Kelembapan saat ini : '+str(air_hum)+'\n'
-            message += 'Batas bawah kelembapan : '+str(t_lrh)+'\n'
-            message += 'Memulai prosedur penyemprotan kabut air\n'
+            if (bool_sent == False):
+                message += 'Kelembapan berada dibawah ambang batas!!!\n'
+                message += 'Kelembapan saat ini : '+str(air_hum)+'\n'
+                message += 'Batas bawah kelembapan : '+str(t_lrh)+'\n'
+                message += 'Memulai prosedur penyemprotan kabut air\n'
+                bool_sent = True
 #            telegram_bot.sendMessage(id_balas, message)
             GPIO.output(mist, GPIO.LOW)
             time.sleep(1)
             GPIO.output(mist, GPIO.HIGH)
+            must_send = True
+
+        if(air_hum > t_lrh and bool_sent == True):
+            bool_sent = False
 #        print('done misting')
         
 #       WATER LEVEL CHECK
         if(distance < t_wh_l and anom_wh == False):
 #            print('menambahkan air kolam')
-            message += 'Ketinggian air kolam kurang dari batas minimal!!!\n'
-            message += 'Ketinggian air saat ini : '+str(distance)+'cm\n'
-            message += 'Batas minimal : '+str(t_wh_l)+'cm\n'
-            message += 'Memulai prosedur pengisian air\n'
+            if (bool_sent == False):
+                message += 'Ketinggian air kolam kurang dari batas minimal!!!\n'
+                message += 'Ketinggian air saat ini : '+str(distance)+'cm\n'
+                message += 'Batas minimal : '+str(t_wh_l)+'cm\n'
+                message += 'Memulai prosedur pengisian air\n'
+                bool_sent = True
 #            telegram_bot.sendMessage(id_balas, message)
             GPIO.output(add_water, GPIO.LOW)
             anom_wh = True
+            must_send = True
 #             
         if(distance > ((t_wh_l+t_wh_h)/2) and anom_wh == True):
 #            print('stop menambahkan air kolam')
@@ -337,23 +381,35 @@ while True:
             message += 'Ketinggian air sudah normal\n'
             message += 'Ketinggian air saat ini : '+str(distance)+'\n'
 #            telegram_bot.sendMessage(id_balas, message)
+            anom_wh = False
+            bool_sent = False
 #        print('done water level')
         
 #       EC CHECK
         if(ec > t_hec and distance < t_wh_h and anom_ec == False):
 #            print('menambahkan air kolam karena ec tinggi')
-            message += 'Air kolam terlalu pekat!\n'
-            message += 'EC saat ini : '+str(ec)+'\n'
-            message += 'Batas maksimal EC : '+str(t_hec)+'\n'
-            message += 'Memulai prosedur pengisian air\n'
+            if (bool_sent == False):
+                message += 'Air kolam terlalu pekat!\n'
+                message += 'EC saat ini : '+str(ec)+'ms/cm\n'
+                message += 'Batas maksimal EC : '+str(t_hec)+'ms/cm\n'
+                message += 'Memulai prosedur pengisian air\n'
+                bool_sent = True
 #            telegram_bot.sendMessage(id_balas, message)
             GPIO.output(add_water, GPIO.LOW)
             anom_ec = True
+            must_send = True
+
+        if(ec < t_hec and anom_ec == True):
+            GPIO.output(add_water, GPIO.HIGH)
+            anom_ec = False
+            bool_sent = False
+            message += 'EC saat ini sudah normal dengan nilai : '+str(ec)+'ms/cm\n'
         
         if(distance > t_wh_h and anom_ec == True):
 #            print('stop menambahkan air kolam karena ec tinggi')
             GPIO.output(add_water, GPIO.HIGH)
             anom_ec = False
+            bool_sent = False
             message += 'Ketinggian air kolam sudah melebihi batas\nSilahkan cek kolam untuk memastikan kadar EC\n'
             message += '\nJika kadar EC lebih dari '+str(t_hec)+'ms/cm, dimohon untuk menguras kolam'
 #            telegram_bot.sendMessage(id_balas, message)
@@ -390,17 +446,20 @@ while True:
 #        print('done feeding')
 
 #        try:
-        if(message != ''):
+        if (message != '' and must_send == True):
+            send_anomaly(now, air_temp, air_hum, water_temp, ph, ec, distance)
+#        if(message != ''):
 #            print('try tele')
 #            print(message)
-            tele = True
-            while(tele):
-                try:
-                    telegram_bot.sendMessage(id_balas, message)
-                    tele = False
+#            tele = True
+#            while(tele):
+#                try:
+#                    telegram_bot.sendMessage(id_balas, message)
+#            print('after tele')
+#                    tele = False
 
-                except:
-                    print('gagal tele')
+#                except:
+#                    print('gagal tele')
 
 #            print('success tele')
 #            else:
