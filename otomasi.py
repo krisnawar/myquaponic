@@ -71,7 +71,9 @@ for i in gpioList:
     GPIO.output(i, GPIO.HIGH)
 
 #user id definition to send telegram notification
-id_balas = 1469794072
+tid = open('chat_id.txt')
+id_balas = tid.readline().strip()
+tid.close()
 telegram_bot = telepot.Bot('1247524897:AAHAdZGhWNky6_gQfjAMduzVPhxqPDqiURM')
 
 # define value for which gpio drive each relay module

@@ -134,6 +134,13 @@ def action(msg):
 		beep()
 		beep()
 
+	elif '/get_chat_id' in command:
+		beep()
+		message = 'Chat ID anda adalah = '+ str(chat_id)
+		telegram_bot.sendMessage(chat_id, message)
+		beep()
+		beep()
+
 	elif '/help' in command:
 		beep()
 		message  = 'SELAMAT DATANG\n'
