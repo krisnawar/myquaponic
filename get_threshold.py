@@ -4,11 +4,15 @@ import sys
 from urllib.request import urlopen
 import datetime
 
+d = open('api_key.txt')
+API_KEY = d.readline().strip()
+d.close()
+
 def writeThreshold():
     fail_retrieve = True
     while fail_retrieve:
         try:
-            url = "https://myquaponic.xyz/api/getthreshold"
+            url = "https://myquaponic.xyz/api/getthreshold?api_key=" + API_KEY
             response = urlopen(url)
             data_json = json.loads(response.read().decode())
 #            print(data_json)

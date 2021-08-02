@@ -2,6 +2,7 @@ from urllib.request import urlopen
 import time
 import datetime
 
+_api_key = 'c4ca4238a0b923820dcc509a6f75849b'
 _air_temp = '30.0'
 _air_humid = '80.0'
 _water_temp = '29.0'
@@ -10,7 +11,7 @@ _ec = '0.2'
 _water_height = '15'
 
 class Temp_Data():
-	def send_temp_data(at, ah, wt, ph, ec, wh):
+	def send_temp_data(api_key, at, ah, wt, ph, ec, wh):
 #		print('function terpanggil')
 		global _air_temp
 		global _air_humid
@@ -34,6 +35,7 @@ class Temp_Data():
 			time.sleep(1)
 #		print('exit while')
 		else:
+			_api_key = str(api_key)
 			_air_temp = str(at)
 			_air_humid = str(ah)
 			_water_temp = str(wt)
@@ -41,7 +43,7 @@ class Temp_Data():
 			_ec = str(ec)
 			_wh = str(wh)
 
-			urlopen('https://myquaponic.xyz/api/update_temp_data?suhu_udara='+_air_temp+'&kelembapan_udara='+_air_humid+'&suhu_air='+_water_temp+'&ph='+_ph+'&ec='+_ec+'&ketinggian_air='+_wh)
+			urlopen('https://myquaponic.xyz/api/update_temp_data?api_key='+_api_key+'&suhu_udara='+_air_temp+'&kelembapan_udara='+_air_humid+'&suhu_air='+_water_temp+'&ph='+_ph+'&ec='+_ec+'&ketinggian_air='+_wh)
 #			print('success')
 
 #		except:

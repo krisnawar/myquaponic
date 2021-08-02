@@ -30,6 +30,9 @@ code_dir = '/home/pi/Desktop/Coding/skripsi/'
 device_folder = glob.glob(base_dir + '28*')[0]
 device_file = device_folder + '/w1_slave'
 
+t = open('api_key.txt')
+API_KEY = t.readline().strip()
+t.close()
 
 def read_rom():
     name_file = device_folder + '/name'
@@ -142,7 +145,7 @@ if __name__ == '__main__':
 #             print("EC                = ", ec)
 #        print('bersiap urlopen')
         try:
-            rescode = urlopen("https://myquaponic.xyz/api/insertdata?recorded_at=" + record + "&suhu_udara=" + str(air_temp) + "&kelembapan_udara=" + str(air_hum) + "&suhu_air=" + str(water_temp) + "&ph=" + str(ph) + "&ec=" + str(ec) + "&ketinggian_air=" + str(distance))
+            rescode = urlopen("https://myquaponic.xyz/api/insertdata?api_key=" + API_KEY +"&recorded_at=" + record + "&suhu_udara=" + str(air_temp) + "&kelembapan_udara=" + str(air_hum) + "&suhu_air=" + str(water_temp) + "&ph=" + str(ph) + "&ec=" + str(ec) + "&ketinggian_air=" + str(distance))
             
             if(rescode.getcode() == 200):
 #                sent_time = datetime.datetime.now()

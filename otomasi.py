@@ -37,6 +37,9 @@ ECHO = 24
 
 GPIO.setup(TRIG, GPIO.OUT)
 GPIO.setup(ECHO, GPIO.IN)
+GPIO.setup(18, GPIO.OUT)
+servo1 = GPIO.PWM(18, 50)
+servo1.start(0)
 
 # variable definition for storing threshold data
 t_wp_on = ""
@@ -132,6 +135,10 @@ time_midnight = datetime.time(midnight.hour, midnight.minute)
 bool_sent = False	#telegram related
 must_send = False	#server
 
+q = open('api_key.txt')
+API_KEY = q.readline().strip()
+q.close()
+
 #calculate distance
 def read_distance(temp, humid):
     GPIO.output(TRIG, False)
@@ -187,7 +194,7 @@ def send_anomaly(rec_at, a_temp, a_humid, w_temp, ph, ec, wh):
     while(bool_sent_anom):
         try:
             print('sending anomali')
-            urlopen('https://myquaponic.xyz/api/insertdata?recorded_at='+record+'&suhu_udara='+str(a_temp)+'&kelembapan_udara='+str(a_humid)+'&suhu_air='+str(w_temp)+'&ph='+str(ph)+'&ec='+str(ec)+'&ketinggian_air='+str(wh))
+            urlopen('https://myquaponic.xyz/api/insertdata?api_key='+API_KEY+'&recorded_at='+record+'&suhu_udara='+str(a_temp)+'&kelembapan_udara='+str(a_humid)+'&suhu_air='+str(w_temp)+'&ph='+str(ph)+'&ec='+str(ec)+'&ketinggian_air='+str(wh))
             print('success sending anomali')
             bool_sent_anom = False
 
@@ -232,15 +239,19 @@ while True:
         ph = round(PH.getPHValue(water_temp), 2)
         tds = TDS.getTDSValue()/500
         ec = round(tds, 3)
-#        print('finish reading sensor')
+        print('finish reading sensor')
 
-        Temp_Data.send_temp_data(humidtemp[1], humidtemp[0], water_temp, ph, ec, distance)
+        Temp_Data.send_temp_data(API_KEY, humidtemp[1], humidtemp[0], water_temp, ph, ec, distance)
 #        print("Water temperature = ", water_temp)
 #        print("Air temperature   = ", air_temp)
 #        print("Air humidity      = ", air_hum)
 #        print("Distance          = ", distance)
 #        print("PH                = ", ph)
 #        print("EC                = ", ec)
+#        print("TDS               = ", TDS.getTDSValue())
+#        GPIO.cleanup()
+#        break
+        
 #        print("Halloo")
         
 #       GET CURRENT TIME
@@ -316,7 +327,7 @@ while True:
                     bool_sent = True
 #                telegram_bot.sendMessage(id_balas, message)
                 GPIO.output(base, GPIO.LOW)
-                time.sleep(1)
+                time.sleep(0.5)
                 GPIO.output(base, GPIO.HIGH)
                 must_send = True
 
@@ -333,7 +344,7 @@ while True:
                     bool_sent = True
 #                telegram_bot.sendMessage(id_balas, message)
                 GPIO.output(acid, GPIO.LOW)
-                time.sleep(2)
+                time.sleep(0.5)
                 GPIO.output(acid, GPIO.HIGH)
                 must_send = True
 
@@ -352,7 +363,7 @@ while True:
                 bool_sent = True
 #            telegram_bot.sendMessage(id_balas, message)
             GPIO.output(mist, GPIO.LOW)
-            time.sleep(1)
+            time.sleep(2)
             GPIO.output(mist, GPIO.HIGH)
             must_send = True
 
@@ -423,6 +434,11 @@ while True:
         if (now.strftime('%H:%M') >= time_mulai.strftime('%H:%M') and now.strftime('%H:%M') <= time_midnight.strftime('%H:%M')):
             if (now.strftime('%H:%M') == time_mulai.strftime('%H:%M') and flag_feed):
 #                print('MEMBERI MAKAN')
+                servo1.ChangeDutyCycle(7)
+                time.sleep(0.3)
+                servo1.ChangeDutyCycle(2)
+                time.sleep(0.5)
+                servo1.ChangeDutyCycle(0)
                 jam_tambah = datetime.timedelta(hours = t_fd)
                 future = now + jam_tambah
                 flag_feed = False
@@ -430,6 +446,11 @@ while True:
 #            print(future.strftime('%H:%M'))
             if (now.strftime('%H:%M') == future.strftime('%H:%M') and flag_feed):
 #                print('MEMBERI MAKAN LAGI')
+                servo1.ChangeDutyCycle(7)
+                time.sleep(0.3)
+                servo1.ChangeDutyCycle(2)
+                time.sleep(0.5)
+                servo1.ChangeDutyCycle(0)
                 jam_tambah = datetime.timedelta(hours = t_fd)
                 future = now + jam_tambah
                 flag_feed = False
@@ -448,18 +469,18 @@ while True:
 #        try:
         if (message != '' and must_send == True):
             send_anomaly(now, air_temp, air_hum, water_temp, ph, ec, distance)
-#        if(message != ''):
+        if(message != ''):
 #            print('try tele')
 #            print(message)
-#            tele = True
-#            while(tele):
-#                try:
-#                    telegram_bot.sendMessage(id_balas, message)
+            tele = True
+            while(tele):
+                try:
+                    telegram_bot.sendMessage(id_balas, message)
 #            print('after tele')
-#                    tele = False
+                    tele = False
 
-#                except:
-#                    print('gagal tele')
+                except:
+                    print('gagal tele')
 
 #            print('success tele')
 #            else:
@@ -474,6 +495,7 @@ while True:
 
     except KeyboardInterrupt:
         print("Selesai")
+        servo1.stop()
         GPIO.cleanup()
         sys.exit()
 
