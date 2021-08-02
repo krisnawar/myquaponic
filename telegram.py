@@ -167,7 +167,11 @@ def action(msg):
 		beep()
 		beep()
 
-telegram_bot = telepot.Bot('1247524897:AAHAdZGhWNky6_gQfjAMduzVPhxqPDqiURM')
+tb = open('token_tele.txt')
+TOKEN = tb.readline().strip()
+tb.close()
+
+telegram_bot = telepot.Bot(TOKEN)
 
 MessageLoop(telegram_bot, action).run_as_thread()
 
