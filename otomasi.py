@@ -74,7 +74,7 @@ for i in gpioList:
 tid = open('chat_id.txt')
 id_balas = tid.readline().strip()
 tid.close()
-telegram_bot = telepot.Bot('1247524897:AAHAdZGhWNky6_gQfjAMduzVPhxqPDqiURM')
+telegram_bot = telepot.Bot('1234567890:AbCdEfGhIjKlMnOpQrStUvWxYzAbCdEfGhI')
 
 # define value for which gpio drive each relay module
 wp_pond = 12
